@@ -1,4 +1,3 @@
-# This is Lab 4
 #Alexander Chase
 
 

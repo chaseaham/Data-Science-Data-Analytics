@@ -1,0 +1,137 @@
+---
+title: "assignment4"
+author: "Alexander Chase"
+date: "10/15/2021"
+output:
+  pdf_document: default
+  html_document: default
+df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# More on Statistics
+
+In this assignment you will further explore and discover one of the most important results in Statistics: The Central Limit Theorem for Proportions.
+
+## Step 0
+
+Start by loading some data into R. For this you will use the `runif` function to generate a sample of numbers from the uniform distribution (theoretical distribution where all observations from the population are equally likely).
+
+1.  Look up how to use the `runif` function on the internet or by issuing the `?runif` in the R console.
+
+2.  Use `runif` to produce 1000 random numbers in the interval from 0 to 20. Store this vector in a variable named `population`. To ensure reproducibility of your results set the seed of R's random number generator using the `set.seed` function.
+
+3.  Visualize this sample's distribution and describe its shape. Use 20 bins.
+
+```{r parts 1-3}
+set.seed(123)
+population = runif(1000, min= 0, max= 20)   # fix this line, must use runinf
+hist(population,breaks = 20) # and this line by specifying the correct number of breaks
+```
+
+4.  Write a function `prop` that takes two arguments, a vector `samp` and a number `x`, that computes the proportion of values in `samp` that are greater than or equal to `x`.
+
+5.  Use your `prop` function to find the proportion of numbers in `population` that are greater than or equal to 12. Store this in a variable named `true_proportion`. Report its value.
+
+```{r code for parts 4-5}
+
+prop = function(samp,x){
+    clump <- vector()
+  {for (c in samp)
+     if (c >= x) { 
+      clump <- c(clump, c)
+    }
+    
+ return (length(clump)/length(samp))
+print(prop)
+}}
+# Run these tests to make your function works
+stopifnot(prop(seq(1,10),5.5)==0.5)
+stopifnot(prop(seq(1,1000),500.5) == 0.5)
+true_proportion = prop(population, 12) # fix this line to compute the true proportion in population
+print(true_proportion)
+```
+
+## Step 1
+
+Let us pretend that we don't know the value of `true_proportion` and that we don't have access to all the values in `population`.
+
+6.  Think about this for a minute: How would you estimate the value of `true_proportion`? Now go to part 7.
+
+7.  To estimate `true_proportion` we could take samples from `population`. Let's do that! We could take samples of size 15. Randomly select 15 values from `population`. Use your `prop` function to obtain the proportion of these numbers that are greater than or equal to 12.
+
+```{r first sample of size 15}
+# Your code goes here for 6-7 goes here
+set.seed(321)
+sample1 = sample(population,size=15)
+estimate1<-prop(sample1,12)
+print(estimate1)
+
+```
+
+8.  Compare your first estimate `estimate1` to the true proportion `true_proportion` using the *relative error*: $\frac{\text{approximation}}{\text{true value}}-1.$ Drop the sign in case you get a negative number (using absolute value).
+
+```{r relative error}
+
+print(abs(estimate1/true_proportion-1)) # fix this line to compute the relative error for your estimate
+
+```
+
+9.  A relative error greater than 0.05 (5%) is large. This will depend on how large your quantities are. Maybe we will have better luck with a different sample. Try again! Randomly select another 15 values from `population`. As before, use `prop` to obtain the proportion of these numbers that are greater than or equal to 12.
+
+```{r second sample of size 15}
+set.seed(456)
+sample2 = sample(population, size=15)
+estimate2 <- prop(sample1, 12)
+print(estimate2)
+```
+
+10. Compute the relative error for your second estimate. Did you have better luck this time?
+
+```{r relative error for second sample}
+print(abs((estimate2/true_proportion)-1))
+    
+```
+
+11. Let us try this many times (Law of Large Numbers!). Let us take 1000 samples, their respective proportions, and average them out (this is your new proportion `estimate`). Report your result.
+
+```{r}
+set.seed(324)
+samples = replicate(1000,prop(sample(population,15),12)) # fix this line by filling in the blanks
+estimate = mean(samples)
+print(estimate)
+```
+
+12. Are you starting to get lucky? Compute the relative error for your `estimate`. How good is it in terms of its relative error?
+
+13. Visualize `samples`. Describe its shape.
+
+```{r sampling dist results}
+print(abs((estimate/true_proportion)-1))
+hist(samples)
+```
+
+14. Is your estimate better? Do it again (parts 11-13) for good measure (be sure to change the seed value).
+
+```{r}
+set.seed(983)
+sample3 = replicate(1000, prop(sample(population, size= 15), 12))
+estimate3 = mean(sample3)
+hist(sample3)
+print(abs((estimate3/true_proportion)-1))
+```
+
+## Step 3
+
+15. What happens if you take larger samples? Repeat parts 10-13 using samples of size 25 with 10000 replications. Report what happened.
+
+```{r}
+set.seed(333)
+sample4 = replicate(10000, prop(sample(population, size= 25), 12))
+estimate4 = mean(sample4)
+hist(sample4)
+print(abs((estimate4/true_proportion)-1))
+```

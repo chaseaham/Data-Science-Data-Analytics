@@ -1,0 +1,158 @@
+---
+title: "5onit"
+author: "chase"
+date: "11/16/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+if  (!('foreign' %in% installed.packages())) install.packages('foreign')
+library(foreign)
+
+    if (!'RSQLite' %in% installed.packages()){
+        install.packages('RSQLite')
+    }
+    
+    if (!'sqldf' %in% installed.packages()){
+        install.packages('sqldf')
+    }
+
+    library(sqldf)
+    
+
+download.file("https://wwwn.cdc.gov/Nchs/Nhanes/2017-2018/P_DEMO.XPT",
+              p_demo <- tempfile(), 
+              mode="wb")
+
+
+download.file("https://wwwn.cdc.gov/Nchs/Nhanes/2017-2018/P_BMX.XPT",
+              p_bmx <- tempfile(), 
+              mode="wb")
+
+p_demo_df <- foreign::read.xport(p_demo)
+p_bmx_demo_df <- foreign:: read.xport(p_bmx)
+
+p_demo_chopped <-sqldf("
+        select SEQN, RIAGENDR, RIDAGEYR, RIDAGEMN from p_demo_df
+      ")
+
+p_bmx_chopped <- sqldf(" select SEQN, BMXWT, BMXHT, BMXBMI, BMXWAIST, BMXHIP from p_bmx_demo_df
+                       ")
+
+combined_df <- sqldf(" select p_demo_chopped.RIAGENDR as Gender, p_demo_chopped.RIDAGEYR as Age, p_bmx_chopped.BMXWT as Weight, p_bmx_chopped.BMXHT as Height, p_bmx_chopped.BMXBMI as BMI, p_bmx_chopped.BMXWAIST as Waist, p_bmx_chopped.BMXHIP from p_demo_chopped left join p_bmx_chopped on p_demo_chopped.SEQN = p_bmx_chopped.SEQN")
+
+combined_df2 <- combined_df[complete.cases(combined_df),]
+
+summary(combined_df2)
+
+#4. The data frame depicts numerical data about things like Age and body mass index. They are measured in kilograms and centimeters as well as years. Gender is described as 1 for male or 2 for female. BMI is measured in (kg/m**2). There are outliers in every data set, however they should not be excluded because they're from the sample and removing them would be discrimination. Their body, their choice. 
+
+
+```
+
+
+
+
+```{r pressure, echo=FALSE}
+
+library(ggplot2) #switch 
+
+ggplot(combined_df2, 
+       aes(x = Height, 
+           y = Weight)) +
+  geom_point(color= "red") +
+  geom_smooth(method= "lm")
+
+ggplot(combined_df2, 
+       aes(x = Age, 
+           y = Weight)) +
+  geom_point(color= "red") +
+  geom_smooth(method= "lm")
+
+ggplot(combined_df2, 
+       aes(x = Gender, 
+           y = Weight)) +
+  geom_point(color= "red") +
+  geom_smooth(method= "lm")
+
+ggplot(combined_df2, 
+       aes(x = BMI, 
+           y = Weight)) +
+  geom_point(color= "red") +
+  geom_smooth(method= "lm")
+
+ggplot(combined_df2, 
+       aes(x = Waist, 
+           y = Weight)) +
+  geom_point(color= "red") +
+  geom_smooth(method= "lm")
+
+ggplot(combined_df2, 
+       aes(x = BMXHIP, 
+           y = Weight)) +
+  geom_point(color= "red") +
+  geom_smooth(method= "lm")
+
+#I believe BMI, HIP, and Waist to be the most predictive. These variables a significantly higher slope than things like age and height. Therefore the higher these values are the higher the theoretical weight will be as a result. 
+```
+```{r}
+#6. 
+initial_model <-lm(formula= Weight ~ BMI, data= combined_df2)
+# I believe the slope coefficient code below is best interpreted as 
+initial_model[["coefficients"]][["BMI"]]
+
+#i believe the relationship  of BMI to be a strong predictor to weight. The slope coefficient is stylistically significant. 
+
+```
+
+
+```{r}
+the_conjuring <-lm(formula= Weight ~ BMI + Age + BMXHIP + Gender + Height + Waist, data= combined_df2)
+
+#interpret
+the_conjuring[["coefficients"]]
+
+
+```
+
+
+```{r}
+#8. I think the linear model is the best model because it provides the actionable intelligence needed to interpret coefficients. 
+
+the_epidemic <-lm(formula= Weight ~ Age + BMXHIP + Gender + Height + Waist, data= combined_df2)
+
+the_faceplant <-lm(formula= Weight ~ BMI  + BMXHIP + Gender + Height + Waist, data= combined_df2)
+
+the_brokenback <-lm(formula= Weight ~ BMI + Age  + Gender + Height + Waist, data= combined_df2)
+
+the_tumble <-lm(formula= Weight ~ BMI + Age + BMXHIP  + Height + Waist, data= combined_df2)
+
+the_plague <-lm(formula= Weight ~ BMI + Age + BMXHIP + Gender  + Waist, data= combined_df2)
+
+the_herniateddisk <-lm(formula= Weight ~ BMI + Age + BMXHIP + Gender + Height, data= combined_df2)
+
+summary(the_conjuring)$r.squared
+
+summary(the_epidemic)$r.squared
+summary(the_faceplant)$r.squared
+summary(the_brokenback)$r.squared
+summary(the_tumble)$r.squared 
+summary(the_plague)$r.squared
+summary(the_herniateddisk)$r.squared
+
+the_tumble[["coefficients"]]
+
+
+# the_tumble has significant coefficients that resemble the original model the_conjuring. Gender was removed from the_tumble. 
+```
+

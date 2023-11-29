@@ -1,0 +1,125 @@
+---
+title: "assignment6chase"
+author: "chase"
+date: "11/25/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{info}
+
+
+### Part 1 (50%)
+
+Use appropiate tests of hypothesis to answer the following questions.
+
+1.  Do men lose height as they age? - #Judging off the slope coefficient -0.01875748, this means there is a negative correlation between age and height. The significant decrease in height occurs when age is approximately 40. 
+
+2.  Do women lose height as they age? - 
+  #  Judging off the slope coefficient -0.06369048, this means there is a negative correlation between age and height. The significant decrease in height occurs when age is approximately 30. 
+
+
+3. In case men and women lose height as they age, which group loses more height? #Women lose more height, see slope coefficients and visualization. 
+
+### Part 2 (50%)
+
+4. Come up with your own question and use an appropiate test to provide a data driven answer to your question.
+
+     # Do men and women get heavier as they get older? Yes, Men and Women gain weight as they age. See   graph below.  
+        
+
+```
+
+
+
+```{R}
+if  (!('foreign' %in% installed.packages())) install.packages('foreign')
+library(foreign)
+
+    if (!'RSQLite' %in% installed.packages()){
+        install.packages('RSQLite')
+    }
+    
+    if (!'sqldf' %in% installed.packages()){
+        install.packages('sqldf')
+    }
+
+    library(sqldf)
+    
+
+download.file("https://wwwn.cdc.gov/Nchs/Nhanes/2017-2018/P_DEMO.XPT",
+              p_demo <- tempfile(), 
+              mode="wb")
+
+
+download.file("https://wwwn.cdc.gov/Nchs/Nhanes/2017-2018/P_BMX.XPT",
+              p_bmx <- tempfile(), 
+              mode="wb")
+
+p_demo_df <- foreign::read.xport(p_demo)
+p_bmx_demo_df <- foreign:: read.xport(p_bmx)
+
+p_demo_chopped <-sqldf("
+        select SEQN, RIAGENDR, RIDAGEYR, RIDAGEMN from p_demo_df
+      ")
+
+p_bmx_chopped <- sqldf(" select SEQN, BMXWT, BMXHT, BMXBMI, BMXWAIST, BMXHIP from p_bmx_demo_df
+                       ")
+
+combined_df <- sqldf(" select p_demo_chopped.RIAGENDR as Gender, p_demo_chopped.RIDAGEYR as Age, p_bmx_chopped.BMXWT as Weight, p_bmx_chopped.BMXHT as Height, p_bmx_chopped.BMXBMI as BMI, p_bmx_chopped.BMXWAIST as Waist, p_bmx_chopped.BMXHIP from p_demo_chopped left join p_bmx_chopped on p_demo_chopped.SEQN = p_bmx_chopped.SEQN")
+
+combined_df2 <- combined_df[complete.cases(combined_df),]
+
+summary(combined_df2)
+
+```
+
+
+
+```{r}
+men <- sqldf("SELECT * from combined_df2 where Gender == '1'")
+women <- sqldf(" SELECT * from combined_df2 where Gender == '2'")
+
+testmen = sqldf(" select Age, avg(Height) as Height from men GROUP By Age")
+testwomen = sqldf(" select Age, avg(Height) as Height from women GROUP By Age")
+
+library(ggplot2) #switch 
+
+men_viz <- ggplot(testmen, 
+       aes(x = Age,
+           y = Height)) +
+  geom_point(color= "red") +
+  geom_smooth(method= "lm")
+
+modelmen = lm(data = testmen, Height~Age)
+modelmen[["coefficients"]][["Age"]]
+
+
+women_viz <- ggplot(testwomen, 
+       aes(x = Age, 
+           y = Height)) +
+  geom_point(color= "red") +
+  geom_smooth(method= "lm")
+
+
+modelwomen = lm(data = testwomen, Height~Age)
+modelwomen[["coefficients"]][["Age"]]
+
+
+
+
+#5: Men and Women get heavier as they age. 
+fat_factor <- ggplot(combined_df2,
+                     aes(x= Age,
+                         y= Weight)) +
+  geom_point(color = "red")+
+  geom_smooth(method = "lm")
+
+
+
+```
+

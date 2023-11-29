@@ -1,0 +1,91 @@
+---
+title: "lab5chase,alex"
+author: "chase"
+date: "11/10/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Install the mosaic package if necessary by running the following line
+ifelse(!('mosaic' %in% installed.packages()), # check the mosaic is installed
+       install.packages('mosaic'),            # if not install the mosaic package
+       library(mosaic))                       # otherwise load the mosaic package 
+library(sqldf)
+```
+
+```{r}
+url = "https://www.openintro.org/data/csv/bdims.csv"
+download.file(url,
+              tf <- tempfile(), 
+              mode="wb")
+
+df = read.csv(tf)
+```
+
+```{r}
+# Is there a relationship between height and shoulder girth?
+#Yes, height and shoulder girth have a relationship. Typically, the wider the shoulders the taller the person.
+
+#hgt = height in cm
+#sho_gi = shoulder girth 
+
+
+plot(x = df$hgt, y=df$sho_gi)
+
+model = lm(hgt ~ sho_gi, data = df)
+print(model)
+summary(model)
+
+# If shoulder height was measured in inches it would throw off the relationship because shoulder height is measured in centimeters. 
+
+means <- sqldf(" select avg(hgt) as avg_height, avg(sho_gi) as avg_girth from df ")
+
+
+#R-Squared : Multiple R-squared:  0.4432,	Adjusted R-squared:  0.4421 
+#It is moderate
+
+
+#6: linear model 
+  # height  = 0.60364 * sho_gi + 105.83246 (baseline height)
+  
+#7: 105.83246 is the base girth for zero height in centimeters. 0.60364 is the number you add to every centimeter of height.
+
+
+#8 the predicted height 171.1438cm corresponds with someone of average shoulder girth or 108.1951cm. (see means)
+
+#9. if a persons shoulder girth is 100cm it is predicted that their height would be 166.195cm tall
+
+  predicted_height <- model$coefficients[[2]] * 100 + model$coefficients[[1]]
+
+
+#10.  Suppose this student's height is 175 cm. Calculate the residual and provide an interpretation of this value.
+
+   predicted_girth <- (175 - model$coefficients[[1]]) / model$coefficients[[2]] 
+   # 114.5833 cm girthy
+   residual_girth <- predicted_girth - means$avg_girth
+   
+   # The residual would be the difference of avg(girth) or 108.1951cm and 114.5833cms. Otherwise known as, 6.388222cm. I interpret this person to be girthier than average... 
+   
+   
+   
+
+#11. It would not be appropriate to use this linear model to predict the height of a child because it is tailored to adults and 60cm isn't depicted on the model. 
+   
+   
+
+#12. Does this sample provide strong evidence that an increase in shoulder girth is associated with an increase in height? State the null and alternative hypotheses, report the p-value, and state your conclusion.
+   
+summary(model) # P-Value: <2.2e-16
+
+#Null hypothesis would be no correlation between shoulder girth and height. 
+
+#The slope coefficient suggests that there is a direct correlation between height and girth. # 0.6 represents a moderate relationship. The significant level also indicates a 3 which, i believe is high. The probability of this event occurring is extremely rare, which further indicates that this occurrence is not a statistical anomaly and rather a trend. 
+
+#The alternative suggestion would be that shoulder girth and height do not have a direct correlation because of the lack of probability or the <2e-16 Pr(>|t|) value. Meaning that it could be interpreted as something that is not adequately reproducible.  
+   
+   
+```

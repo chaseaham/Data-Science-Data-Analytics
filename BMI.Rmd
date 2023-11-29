@@ -1,6 +1,6 @@
 ---
-title: "assignment6chase"
-author: "chase"
+title: "Body Mass Index"
+author: "Chase"
 date: "11/25/2021"
 output: html_document
 ---

@@ -1,5 +1,5 @@
 ---
-title: "lab5chase,alex"
+title: "Girth Time"
 author: "chase"
 date: "11/10/2021"
 output: html_document
